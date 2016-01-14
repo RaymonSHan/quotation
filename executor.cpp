@@ -58,6 +58,11 @@ int main( int argc, char** argv )
     Application application;
     FIX::FileStoreFactory storeFactory( settings );
     FIX::ScreenLogFactory logFactory( settings );
+
+	FIX::Dictionary settingDict = settings.get();
+	settingDict.setString(FIX::BEGINSTRING, "SACSTEP1.0" );
+    settings.set( settingDict );
+
     FIX::ThreadedSocketAcceptor acceptor( application, storeFactory, settings, logFactory );
 
     acceptor.start();

@@ -98,7 +98,7 @@ void Application::queryEnterOrder()
   FIX::Message message;
   FIX::Header& header = message.getHeader();
 
-  header.setField(FIX::BeginString("FIX.4.2"));
+  header.setField(FIX::BeginString(FIX::BeginString_FIX42));
   header.setField(FIX::SenderCompID("CLIENT1"));
   header.setField(FIX::TargetCompID("EXECUTOR"));
   header.setField(FIX::MsgType("UF606"));

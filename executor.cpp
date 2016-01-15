@@ -27,6 +27,7 @@
 #include "quickfix/ThreadedSocketAcceptor.h"
 #include "quickfix/Log.h"
 #include "quickfix/SessionSettings.h"
+#include "quickfix/MySQLConnection.h"
 #include "Application.h"
 #include <string>
 #include <iostream>
@@ -45,8 +46,7 @@ int main( int argc, char** argv )
 {
   if ( argc != 2 )
   {
-    std::cout << "usage: " << argv[ 0 ]
-    << " FILE." << std::endl;
+    std::cout << "usage: " << argv[ 0 ] << " FILE." << std::endl;
     return 0;
   }
   std::string file = argv[ 1 ];
@@ -54,15 +54,19 @@ int main( int argc, char** argv )
   try
   {
     FIX::SessionSettings settings( file );
+    FIX::MySQLConnection quotationDatabase( "quotes", "root", "", "192.168.206.139", 3306 );
+    std::stringstream queryString;
+    queryString << "SELECT stock_name, stock_number FROM stock_detail";
+    FIX::MySQLQuery query( queryString.str() );
+
+    if( !quotationDatabase.execute(query) )
+      return 1;
+    int rows = query.rows();
+    printf( "%d\n", rows );
 
     Application application;
     FIX::FileStoreFactory storeFactory( settings );
     FIX::ScreenLogFactory logFactory( settings );
-
-	FIX::Dictionary settingDict = settings.get();
-	settingDict.setString(FIX::BEGINSTRING, "SACSTEP1.0" );
-    settings.set( settingDict );
-
     FIX::ThreadedSocketAcceptor acceptor( application, storeFactory, settings, logFactory );
 
     acceptor.start();

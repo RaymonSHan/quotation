@@ -101,12 +101,13 @@ void Application::queryEnterOrder()
   header.setField(FIX::BeginString(FIX::BeginString_FIX42));
   header.setField(FIX::SenderCompID("CLIENT1"));
   header.setField(FIX::TargetCompID("EXECUTOR"));
-  header.setField(FIX::MsgType("UF606"));
-  message.setField(FIX::OrigClOrdID("123"));
-  message.setField(FIX::ClOrdID("321"));
-  message.setField(FIX::Symbol("LNUX"));
-  message.setField(FIX::Side(FIX::Side_BUY));
-  message.setField(FIX::Text("Cancel My Order!"));
+  header.setField(FIX::MsgType("UF022"));
+
+  message.setField(FIX::SecurityStatusReqID("12345"));
+  message.setField(FIX::ExecType('Y'));
+  message.setField(FIX::TransactTime("12"));
+  message.setField(FIX::Text("asfasfsadf"));
+  message.setField(567,"1");
 
   FIX::Session::sendToTarget(message);
   return;

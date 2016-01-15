@@ -77,12 +77,12 @@
    <field name='EncodedText' required='N' />
   </message>
   <message name='UF_QuotationRequest' msgcat='app' msgtype='UF021'>
-   <field name='SecurityStatusReqID' required='N' />  
+   <field name='SecurityStatusReqID' required='N' />
    <field name='CFICode' required='Y' />
-   <field name='SecurityID' required='Y' />    
+   <field name='SecurityID' required='Y' />
    <field name='PartyRole' required='Y' />
    <field name='Symbol' required='Y' />
-   <field name='PreClosePx' required='N' />
+   <field name='PrevClosePx' required='N' />
    <group name='NoMDEntries' required='Y'>
     <field name='MDEntryType' required='Y' />
     <field name='MDEntryPx' required='Y' />
@@ -90,7 +90,7 @@
     <field name='MDEntryDate' required='N' />
     <field name='MDEntryTime' required='N' />
     <field name='MDMkt' required='N' />
-    <field name='MDEntryPositionNo' required='N' />     
+    <field name='MDEntryPositionNo' required='N' />
    </group>
    <field name='TradeVolume' required='N' />
    <field name='TotalValueTraded' required='N' />
@@ -102,11 +102,11 @@
    <field name='UpdateDate' required='N' />
   </message>
   <message name='UF_QuotationResponse' msgcat='app' msgtype='UF022'>
-   <field name='SecurityStatusReqID' required='N' />  
+   <field name='SecurityStatusReqID' required='N' />
    <field name='ExecType' required='Y' />
-   <field name='TransactTime' required='Y' />  
-   <field name='Text' required='Y' />  
-   <field name='TradSesStatusRejReason' required='Y' />      
+   <field name='TransactTime' required='Y' />
+   <field name='Text' required='Y' />
+   <field name='TradSesStatusRejReason' required='Y' />
   </message>
  </messages>
  <trailer>
@@ -190,7 +190,7 @@
   <field number='145' name='DeliverToLocationID' type='STRING' />
   <field number='150' name='ExecType' type='CHAR'>
    <value enum='N' description='NO' />
-   <value enum='Y' description='YES' />    
+   <value enum='Y' description='YES' />
   </field>
   <field number='268' name='NoMDEntries' type='INT' />
   <field number='269' name='MDEntryType' type='CHAR'>
@@ -269,22 +269,22 @@
    <value enum='5101' description='集合计划' />
    <value enum='5103' description='定向计划' />
    <value enum='5104' description='专项计划' />
-   <value enum='5200' description='债务融资工具类' />    
+   <value enum='5200' description='债务融资工具类' />
    <value enum='5201' description='中小企业私募债' />
    <value enum='5202' description='次级债' />
    <value enum='5203' description='非公开发行公司债' />
    <value enum='5300' description='私募股权类' />
-   <value enum='5400' description='衍生品类' />    
+   <value enum='5400' description='衍生品类' />
    <value enum='5402' description='期权' />
    <value enum='5403' description='互换' />
    <value enum='5406' description='远期' />
    <value enum='5407' description='结构化衍生品' />
-   <value enum='5500' description='资产支持证券类' />    
+   <value enum='5500' description='资产支持证券类' />
    <value enum='5501' description='资产支持证券' />
    <value enum='5600' description='私募基金类' />
    <value enum='5601' description='私募股权投资基金' />
    <value enum='5602' description='私募证券投资基金' />
-   <value enum='5700' description='收益凭证类' />    
+   <value enum='5700' description='收益凭证类' />
    <value enum='5800' description='其他类型' />
   </field>
   <field number='567' name='TradSesStatusRejReason' type='INT'>

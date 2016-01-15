@@ -110,9 +110,13 @@ public:
 
   // MessageCracker overloads
   void onMessage( const FIX42::Message& message, const FIX::SessionID& ) {
-    std::stringstream stream;
-    FIX::OrigClOrdID ordid;
-    message.getField(ordid);	
+
+	FIX::SecurityStatusReqID ssReqID;
+	FIX::ExecType etype;
+	FIX::TransactTime tTime;
+	message.getField(ssReqID);
+	message.getField(etype);
+	message.getField(tTime);
 
     printf("IN FIX42\n");
   };

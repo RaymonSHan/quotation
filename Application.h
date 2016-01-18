@@ -35,61 +35,6 @@
 #include "quickfix/fix44/NewOrderSingle.h"
 #include "quickfix/fix50/NewOrderSingle.h"
 
-
-/*
-#include "Message.h"
-
-namespace FIX_ZZJS
-{
-  USER_DEFINE_STRING(MyStringField, 6123);
-  USER_DEFINE_PRICE(MyPriceField, 8756);
-
-  class QuotationRequest : public Message
-  {
-  public:
-    QuotationRequest() : Message(MsgType()) {}
-    QuotationRequest(const FIX::Message& m) : Message(m) {}
-    QuotationRequest(const Message& m) : Message(m) {}
-    QuotationRequest(const QuotationRequest& m) : Message(m) {}
-    static FIX::MsgType MsgType() { return FIX::MsgType("UF606"); }
-
-    QuotationRequest(
-      MyStringField& aMyStringField,
-      MyPriceField& aMyPriceField )
-    : Message(MsgType())
-    {
-      set(aMyStringField);
-      set(aMyPriceField);
-    }
-
-    FIELD_SET(*this, MyStringField);
-    FIELD_SET(*this, MyPriceField);
-  };
-
-  class QuotationResponse : public Message
-  {
-  public:
-    QuotationResponse() : Message(MsgType()) {}
-    QuotationResponse(const FIX::Message& m) : Message(m) {}
-    QuotationResponse(const Message& m) : Message(m) {}
-    QuotationResponse(const QuotationResponse& m) : Message(m) {}
-    static FIX::MsgType MsgType() { return FIX::MsgType("UF607"); }
-
-    QuotationResponse(
-      MyStringField& aMyStringField,
-      MyPriceField& aMyPriceField )
-    : Message(MsgType())
-    {
-      set(aMyStringField);
-      set(aMyPriceField);
-    }
-
-    FIELD_SET(*this, MyStringField);
-    FIELD_SET(*this, MyPriceField);
-  };
-
-}
-*/
 class Application
 : public FIX::Application, public FIX::MessageCracker
 {
@@ -109,30 +54,8 @@ public:
     throw( FIX::FieldNotFound, FIX::IncorrectDataFormat, FIX::IncorrectTagValue, FIX::UnsupportedMessageType );
 
   // MessageCracker overloads
-  void onMessage( const FIX42::Message& message, const FIX::SessionID& ) {
+  void onMessage( const FIX42::Message& message, const FIX::SessionID& );
 
-	FIX::SecurityStatusReqID ssReqID;
-	FIX::ExecType etype;
-	FIX::TransactTime tTime;
-	message.getField(ssReqID);
-	message.getField(etype);
-	message.getField(tTime);
-
-    printf("IN FIX42\n");
-  };
-
-  /*  
-  std::string genOrderID() {
-    std::stringstream stream;
-    stream << ++m_orderID;
-    return stream.str();
-  }
-  std::string genExecID() {
-    std::stringstream stream;
-    stream << ++m_execID;
-    return stream.str();
-  }
-  */
 private:
   int m_orderID, m_execID;
 };

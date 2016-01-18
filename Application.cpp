@@ -51,51 +51,25 @@ void Application::fromApp( const FIX::Message& message,
 throw( FIX::FieldNotFound, FIX::IncorrectDataFormat, FIX::IncorrectTagValue, FIX::UnsupportedMessageType )
 { crack( message, sessionID ); }
 
-/*
-void Application::onMessage( const FIX40::NewOrderSingle& message,
-                             const FIX::SessionID& sessionID )
+void Application::onMessage( const FIX42::Message& message, 
+							 const FIX::SessionID& sessionID)
 {
-  FIX::Symbol symbol;
-  FIX::Side side;
-  FIX::OrdType ordType;
-  FIX::OrderQty orderQty;
-  FIX::Price price;
-  FIX::ClOrdID clOrdID;
-  FIX::Account account;
-
-  message.get( ordType );
-
-  if ( ordType != FIX::OrdType_LIMIT )
-    throw FIX::IncorrectTagValue( ordType.getField() );
-
-  message.get( symbol );
-  message.get( side );
-  message.get( orderQty );
-  message.get( price );
-  message.get( clOrdID );
-
-  FIX40::ExecutionReport executionReport = FIX40::ExecutionReport
-      ( FIX::OrderID( genOrderID() ),
-        FIX::ExecID( genExecID() ),
-        FIX::ExecTransType( FIX::ExecTransType_NEW ),
-        FIX::OrdStatus( FIX::OrdStatus_FILLED ),
-        symbol,
-        side,
-        orderQty,
-        FIX::LastShares( orderQty ),
-        FIX::LastPx( price ),
-        FIX::CumQty( orderQty ),
-        FIX::AvgPx( price ) );
-
-  executionReport.set( clOrdID );
-
-  if( message.isSet(account) )
-    executionReport.setField( message.get(account) );
-
-  try
+  const std::string& msgTypeValue 
+    = message.getHeader().getField( FIX::FIELD::MsgType );
+  if( msgTypeValue == "UF021" )
   {
-    FIX::Session::sendToTarget( executionReport, sessionID );
   }
-  catch ( FIX::SessionNotFound& ) {}
+
+  if( msgTypeValue == "UF022" )
+  {
+  }
+
+  FIX::SecurityStatusReqID ssReqID;
+  FIX::ExecType etype;
+  FIX::TransactTime tTime;
+  message.getField(ssReqID);
+  message.getField(etype);
+  message.getField(tTime);
+
+  printf("IN FIX42\n");
 }
-*/

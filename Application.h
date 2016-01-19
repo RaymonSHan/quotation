@@ -22,18 +22,18 @@
 #ifndef EXECUTOR_APPLICATION_H
 #define EXECUTOR_APPLICATION_H
 
+#ifdef _MSC_VER
+#pragma warning( disable : 4503 4355 4786 )
+#else
+#include "config.h"
+#endif
+
 #include "quickfix/Application.h"
 #include "quickfix/MessageCracker.h"
 #include "quickfix/Values.h"
 #include "quickfix/Utility.h"
 #include "quickfix/Mutex.h"
-
-#include "quickfix/fix40/NewOrderSingle.h"
-#include "quickfix/fix41/NewOrderSingle.h"
-#include "quickfix/fix42/NewOrderSingle.h"
-#include "quickfix/fix43/NewOrderSingle.h"
-#include "quickfix/fix44/NewOrderSingle.h"
-#include "quickfix/fix50/NewOrderSingle.h"
+#include "quickfix/MySQLConnection.h"
 
 class Application
 : public FIX::Application, public FIX::MessageCracker
@@ -58,6 +58,50 @@ public:
 
 private:
   int m_orderID, m_execID;
+};
+
+#define MAX_GROUP 16
+#define MAX_FIELD 200
+
+typedef unsigned int UINT;
+typedef std::string STRING;
+
+class QuotationGroup
+{
+public:
+  QuotationGroup();
+  ~QuotationGroup();
+  UINT Init( UINT groupNumber, FIX::MySQLQuery *query );
+  UINT Add( UINT memberNumber );
+  UINT Add( UINT groupNumber, UINT memberNumber );
+  STRING GetMainField( FIX::Message& message, UINT order );
+  UINT GetGroupField( FIX::Message& message, STRING id );
+
+private:
+  UINT GroupNumber;
+  FIX::MySQLQuery *QueryQuoteMore;
+  UINT FieldNumber;
+  int Fields[ MAX_FIELD ];
+};
+
+class QuotationDatabaseCache
+{
+public:
+  QuotationDatabaseCache( STRING ipaddress, STRING username, STRING password );
+  UINT Connect();
+  UINT Disconnect();
+  UINT Reflush();
+  UINT Get( FIX::Message& message, UINT order );
+  UINT Get( FIX::Message& message, STRING client );
+private:
+  STRING IpAddress, Username, Password;
+  UINT NowGroup;
+  FIX::MySQLConnection *QuotationDatabase;
+  FIX::MySQLQuery *QueryQuoteOrder;
+  class QuotationGroup *QuotationGroups[ MAX_GROUP ];
+  std::map<STRING, UINT> SessionMap;
+
+  FIX::MySQLQuery* CreateGroup( int groupNumber, STRING getSql );
 };
 
 #endif

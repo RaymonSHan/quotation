@@ -62,6 +62,9 @@ private:
 
 #define MAX_GROUP 16
 #define MAX_FIELD 200
+#define SERVER_NAME "EXECUTOR"
+#define MSGTYPE_UF021 "UF021"
+#define MSGTYPE_UF022 "UF022"
 
 typedef unsigned int UINT;
 typedef std::string STRING;
@@ -75,6 +78,7 @@ public:
   UINT Add( UINT memberNumber );
   UINT Add( UINT groupNumber, UINT memberNumber );
   STRING GetMainField( FIX::Message& message, UINT order );
+  UINT GetErrorField( FIX::Message& message );
   UINT GetGroupField( FIX::Message& message, STRING id );
 
 private:

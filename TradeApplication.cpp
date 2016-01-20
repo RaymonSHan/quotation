@@ -29,6 +29,8 @@
 #include "quickfix/Session.h"
 #include <iostream>
 
+UINT GlobalLogout = 0;
+
 void Application::onLogon( const FIX::SessionID& sessionID )
 {
   std::cout << std::endl << "Logon - " << sessionID << std::endl;
@@ -36,6 +38,7 @@ void Application::onLogon( const FIX::SessionID& sessionID )
 
 void Application::onLogout( const FIX::SessionID& sessionID )
 {
+  GlobalLogout = 1;
   std::cout << std::endl << "Logout - " << sessionID << std::endl;
 }
 
@@ -64,6 +67,7 @@ void Application::run()
     try
     {
       FIX::process_sleep(1);
+	  if ( GlobalLogout ) break;
     }
     catch ( std::exception & e )
     {

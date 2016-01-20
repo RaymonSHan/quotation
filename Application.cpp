@@ -173,6 +173,14 @@ STRING QuotationGroup::GetMainField( FIX::Message& message, UINT order )
   return strid;
 };
 
+UINT QuotationGroup::GetErrorField( FIX::Message& message )
+{
+  for( UINT i = 0; i < FieldNumber; i++ ) {
+    message.setField( Fields[ i ], "0" );
+  }
+  return 1;
+};
+
 UINT QuotationGroup::GetGroupField( FIX::Message& message, STRING id )
 {
   UINT row = QueryQuoteMore->rows();
@@ -191,15 +199,8 @@ UINT QuotationGroup::GetGroupField( FIX::Message& message, STRING id )
 
 UINT QuotationDatabaseCache::Get( FIX::Message& message, UINT order, STRING client )
 {
-  FIX::Header& header = message.getHeader();
-
-  header.setField( FIX::BeginString( FIX::BeginString_FIX42 ));
-  header.setField( FIX::SenderCompID( "EXECUTOR" ));
-  header.setField( FIX::TargetCompID( client ));
-  header.setField( FIX::MsgType( "UF021" ));
-
   STRING noworder;
-  noworder = QuotationGroups[ 0 ]->GetMainField( message, order );
+  noworder = QuotationGroups[ 0 ] -> GetMainField( message, order );
   for ( UINT i = 1; i < NowGroup; i++ ) {
     QuotationGroups[ i ]->GetGroupField( message, noworder );
   }
@@ -210,6 +211,12 @@ UINT QuotationDatabaseCache::Get( FIX::Message& message, STRING client )
 {
   std::map<STRING, UINT>::iterator iter;
   UINT order;
+  FIX::Header& header = message.getHeader();
+
+  header.setField( FIX::BeginString( FIX::BeginString_FIX42 ));
+  header.setField( FIX::SenderCompID( SERVER_NAME ));
+  header.setField( FIX::TargetCompID( client ));
+  header.setField( FIX::MsgType( MSGTYPE_UF021 ));
 
   iter = SessionMap.find( client );
   if ( iter == SessionMap.end() ) {
@@ -221,7 +228,11 @@ UINT QuotationDatabaseCache::Get( FIX::Message& message, STRING client )
       iter -> second = order + 1;
       return Get( message, order, client );
     }
-    return 1;
+	else {
+      header.setField( FIX::MsgType( "5" ));
+	  return 1;
+      //	  return QuotationGroups[ 0 ] -> GetErrorField( message );
+    }
   }
 };
 
@@ -251,7 +262,7 @@ void Application::onMessage( const FIX42::Message& message,
   const std::string& msgTypeValue 
     = message.getHeader().getField( FIX::FIELD::MsgType );
 
-  if( msgTypeValue == "UF022" )
+  if( msgTypeValue == MSGTYPE_UF022 )
   {
 printf("uf022 1\n");
     FIX::Message message;
@@ -269,7 +280,7 @@ printf("uf022 3\n");
 printf("uf022 4\n");
     } else {
 printf("uf022 5\n");
-      sessionID.generateBusinessReject( message, FIX::BusinessRejectReason_OTHER, 0 );
+	  FIX::Session::sendToTarget( message );
 printf("uf022 6\n");
     }
   }

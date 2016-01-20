@@ -29,6 +29,9 @@
 
 #include <queue>
 
+typedef unsigned int UINT;
+typedef std::string STRING;
+
 class Application :
       public FIX::Application,
       public FIX::MessageCracker
@@ -49,10 +52,7 @@ private:
   throw( FIX::FieldNotFound, FIX::IncorrectDataFormat, FIX::IncorrectTagValue, FIX::UnsupportedMessageType );
 
   void onMessage( const FIX42::Message& message, const FIX::SessionID& );
-  void onMessage( const FIX44::Message& message, const FIX::SessionID& );
 
-  void queryEnterOrder();
-  char queryAction();
 };
 
 #endif

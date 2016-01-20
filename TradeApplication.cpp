@@ -43,7 +43,6 @@ void Application::fromApp( const FIX::Message& message, const FIX::SessionID& se
 throw( FIX::FieldNotFound, FIX::IncorrectDataFormat, FIX::IncorrectTagValue, FIX::UnsupportedMessageType )
 {
   crack( message, sessionID );
-  //  std::cout << std::endl << "IN: " << message << std::endl;
 }
 
 void Application::toApp( FIX::Message& message, const FIX::SessionID& sessionID )
@@ -56,16 +55,7 @@ throw( FIX::DoNotSend )
     if ( possDupFlag ) throw FIX::DoNotSend();
   }
   catch ( FIX::FieldNotFound& ) {}
-
-  //  std::cout << std::endl
-  //  << "OUT: " << message << std::endl;
 }
-
-void Application::onMessage
-( const FIX42::Message& message, const FIX::SessionID& ) {}
-void Application::onMessage
-( const FIX44::Message& message, const FIX::SessionID& ) {}
-
 
 void Application::run()
 {
@@ -73,18 +63,7 @@ void Application::run()
   {
     try
     {
-      char action = queryAction();
-
-      if ( action == '1' )
-        queryEnterOrder();
-      //      else if ( action == '2' )
-        //        queryCancelOrder();
-      //      else if ( action == '3' )
-        //        queryReplaceOrder();
-      //      else if ( action == '4' )
-        //        queryMarketDataRequest();
-      else if ( action == '5' )
-        break;
+      FIX::process_sleep(1);
     }
     catch ( std::exception & e )
     {
@@ -93,42 +72,28 @@ void Application::run()
   }
 }
 
-void Application::queryEnterOrder()
+void Application::onMessage( const FIX42::Message& message, const FIX::SessionID& sessionID )
 {
-  FIX::Message message;
-  FIX::Header& header = message.getHeader();
+  const STRING& msgTypeValue 
+    = message.getHeader().getField( FIX::FIELD::MsgType );
 
-  header.setField(FIX::BeginString(FIX::BeginString_FIX42));
-  header.setField(FIX::SenderCompID("CLIENT1"));
-  header.setField(FIX::TargetCompID("EXECUTOR"));
-  header.setField(FIX::MsgType("UF022"));
-
-  message.setField(FIX::SecurityStatusReqID("12345"));
-  message.setField(FIX::ExecType('Y'));
-  message.setField(FIX::TransactTime("12"));
-  message.setField(FIX::Text("asfasfsadf"));
-  message.setField(567,"1");
-
-  FIX::Session::sendToTarget(message);
-  return;
-}
-
-char Application::queryAction()
-{
-  char value;
-  std::cout << std::endl
-  << "1) UF606" << std::endl
-  << "2) " << std::endl
-  << "3) " << std::endl
-  << "4) " << std::endl
-  << "5) Quit" << std::endl
-  << "Action: ";
-  std::cin >> value;
-  switch ( value )
+  if( msgTypeValue == "UF021" )
   {
-    case '1': case '2': case '3': case '4': case '5': break;
-    default: throw std::exception();
-  }
-  return value;
-}
+printf("onMessage 1\n");
+    FIX::Message newmessage;
+    FIX::Header& newheader = newmessage.getHeader();
 
+    newheader.setField( FIX::BeginString( FIX::BeginString_FIX42 ));
+    newheader.setField( FIX::SenderCompID( "CLIENT1" ));
+    newheader.setField( FIX::TargetCompID( "EXECUTOR" ));
+    newheader.setField( FIX::MsgType( "UF022" ));
+
+    newmessage.setField( 150 , "Y" );
+    newmessage.setField( 60, "20160120-11:22:33" );
+    newmessage.setField( 58, "OK" );
+    newmessage.setField( 567, "0" );
+printf("onMessage 2\n");
+	FIX::Session::sendToTarget( newmessage );
+printf("onMessage 3\n");
+  }
+}

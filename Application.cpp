@@ -26,17 +26,27 @@
 #include "Application.h"
 #include "quickfix/Session.h"
 
-#include "quickfix/fix40/ExecutionReport.h"
-#include "quickfix/fix41/ExecutionReport.h"
-#include "quickfix/fix42/ExecutionReport.h"
-#include "quickfix/fix43/ExecutionReport.h"
-#include "quickfix/fix44/ExecutionReport.h"
-#include "quickfix/fix50/ExecutionReport.h"
-
 extern QuotationDatabaseCache *MainDatabase;
 
 void Application::onCreate( const FIX::SessionID& sessionID ) {}
-void Application::onLogon( const FIX::SessionID& sessionID ) {}
+
+void Application::onLogon( const FIX::SessionID& sessionID ) 
+{
+  FIX::Message message;
+  const FIX::SenderCompID& senderid = sessionID.getSenderCompID();
+  const FIX::TargetCompID& targetid = sessionID.getTargetCompID();
+  const STRING& sender = senderid.getString();
+  const STRING& target = targetid.getString();
+
+printf("login 1\n");
+  MainDatabase -> SetSequ( target, 0 );
+printf("login 2 s:%s, t:%s\n", sender.c_str(), target.c_str());
+  MainDatabase -> Get( message, target );
+printf("login 3\n");
+  FIX::Session::sendToTarget( message );
+printf("login 4\n");
+};
+
 void Application::onLogout( const FIX::SessionID& sessionID ) {}
 void Application::toAdmin( FIX::Message& message,
                            const FIX::SessionID& sessionID ) {}
@@ -52,9 +62,6 @@ void Application::fromApp( const FIX::Message& message,
                            const FIX::SessionID& sessionID )
 throw( FIX::FieldNotFound, FIX::IncorrectDataFormat, FIX::IncorrectTagValue, FIX::UnsupportedMessageType )
 { crack( message, sessionID ); }
-
-//int orderDetail[] = {461, 48, 452, 55, 140, 1020, 8504};
-//int orderMD[] = {269, 270, 271, 272};
 
 QuotationGroup::QuotationGroup()
 {
@@ -130,16 +137,6 @@ UINT QuotationDatabaseCache::Connect()
   return 0;
 };
 
-FIX::MySQLQuery* QuotationDatabaseCache::CreateGroup( int groupNumber, STRING getSql )
-{
-  FIX::MySQLQuery *getgroup;
-  getgroup = new FIX::MySQLQuery( getSql );
-  if( !QuotationDatabase->execute(*getgroup) )
-    return NULL;
-  QuotationGroups[ NowGroup++ ]->Init( groupNumber, getgroup );
-  return getgroup;
-};
-
 UINT QuotationDatabaseCache::Disconnect()
 {
   if ( QueryQuoteOrder ) delete QueryQuoteOrder;
@@ -154,12 +151,24 @@ UINT QuotationDatabaseCache::Disconnect()
   return 0;
 };
 
+FIX::MySQLQuery* QuotationDatabaseCache::CreateGroup( int groupNumber, STRING getSql )
+{
+  FIX::MySQLQuery *getgroup;
+  getgroup = new FIX::MySQLQuery( getSql );
+  if( !QuotationDatabase->execute(*getgroup) )
+    return NULL;
+  if ( groupNumber == 0 )
+      RecordNumber = getgroup->rows();
+  QuotationGroups[ NowGroup++ ]->Init( groupNumber, getgroup );
+  return getgroup;
+};
+
 STRING QuotationGroup::GetMainField( FIX::Message& message, UINT order )
 {
   STRING strid = QueryQuoteMore->getValue( order, 0 );
   for( UINT i = 0; i < FieldNumber; i++ ) {
+    //printf("MainField order %d, %s\n", Fields[i], QueryQuoteMore->getValue( order, i+1 ));
     message.setField( Fields[ i ], QueryQuoteMore->getValue( order, i+1 ));
-printf("add main %d, %s\n", Fields[i], QueryQuoteMore->getValue( order, i+1 ));      
   }
   return strid;
 };
@@ -173,7 +182,6 @@ UINT QuotationGroup::GetGroupField( FIX::Message& message, STRING id )
       FIX::Group group( GroupNumber, 0, Fields );
       for ( UINT j = 0; j < FieldNumber; j++ ) {
         group.setField( Fields[j], QueryQuoteMore->getValue( i, j+1 ));
-printf("add group %d, %s\n", Fields[j], QueryQuoteMore->getValue( i, j+1 ));      
 	  }
       message.addGroup( group );
     }
@@ -181,14 +189,14 @@ printf("add group %d, %s\n", Fields[j], QueryQuoteMore->getValue( i, j+1 ));
   return row;
 };
 
-UINT QuotationDatabaseCache::Get( FIX::Message& message, UINT order )
+UINT QuotationDatabaseCache::Get( FIX::Message& message, UINT order, STRING client )
 {
   FIX::Header& header = message.getHeader();
 
-  header.setField(FIX::BeginString(FIX::BeginString_FIX42));
-  header.setField(FIX::SenderCompID("EXECUTOR"));
-  header.setField(FIX::TargetCompID("CLIENT1"));
-  header.setField(FIX::MsgType("UF022"));
+  header.setField( FIX::BeginString( FIX::BeginString_FIX42 ));
+  header.setField( FIX::SenderCompID( "EXECUTOR" ));
+  header.setField( FIX::TargetCompID( client ));
+  header.setField( FIX::MsgType( "UF021" ));
 
   STRING noworder;
   noworder = QuotationGroups[ 0 ]->GetMainField( message, order );
@@ -200,25 +208,70 @@ UINT QuotationDatabaseCache::Get( FIX::Message& message, UINT order )
 
 UINT QuotationDatabaseCache::Get( FIX::Message& message, STRING client )
 {
-  return 0;
+  std::map<STRING, UINT>::iterator iter;
+  UINT order;
+
+  iter = SessionMap.find( client );
+  if ( iter == SessionMap.end() ) {
+    SessionMap.insert( std::pair<STRING, UINT>( client, 1 ) );
+    return Get( message, 0, client );
+  } else {
+    order = iter -> second;
+    if ( order < RecordNumber ) {
+      iter -> second = order + 1;
+      return Get( message, order, client );
+    }
+    return 1;
+  }
 };
 
+int QuotationDatabaseCache::GetSequ( STRING client )
+{
+  std::map<STRING, UINT>::iterator iter;
+  iter = SessionMap.find( client );
+  if ( iter == SessionMap.end() ) 
+	return -1;
+  else 
+	return iter -> second;
+};
+
+void QuotationDatabaseCache::SetSequ( STRING client, UINT sequ )
+{
+  std::map<STRING, UINT>::iterator iter;
+  iter = SessionMap.find( client );
+  if ( iter == SessionMap.end() ) 
+	SessionMap.insert( std::pair<STRING, UINT>( client, sequ ) );
+  else 
+	iter -> second = sequ;
+};
 
 void Application::onMessage( const FIX42::Message& message, 
-							 const FIX::SessionID& sessionID)
+							 const FIX::SessionID& sessionID )
 {
   const std::string& msgTypeValue 
     = message.getHeader().getField( FIX::FIELD::MsgType );
-  if( msgTypeValue == "UF021" )
-  {
-  }
 
   if( msgTypeValue == "UF022" )
   {
-  }
-  FIX::Message newmessage;
-  MainDatabase->Get( newmessage, UINT(1) );
-  FIX::Session::sendToTarget( newmessage );
+printf("uf022 1\n");
+    FIX::Message message;
+    const FIX::SenderCompID& senderid = sessionID.getSenderCompID();
+    const FIX::TargetCompID& targetid = sessionID.getTargetCompID();
+    const STRING& sender = senderid.getString();
+    const STRING& target = targetid.getString();
+    UINT result;
 
-  printf("IN FIX42\n");
+printf("uf022 2 s:%s, t:%s\n", sender.c_str(), target.c_str());
+    result = MainDatabase -> Get( message, target );
+    if ( result != 1 ) {
+printf("uf022 3\n");
+	  FIX::Session::sendToTarget( message );
+printf("uf022 4\n");
+    } else {
+printf("uf022 5\n");
+      sessionID.generateBusinessReject( message, FIX::BusinessRejectReason_OTHER, 0 );
+printf("uf022 6\n");
+    }
+  }
+printf("uf022 7\n");
 }

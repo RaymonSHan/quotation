@@ -91,11 +91,14 @@ public:
   UINT Connect();
   UINT Disconnect();
   UINT Reflush();
-  UINT Get( FIX::Message& message, UINT order );
+  UINT Get( FIX::Message& message, UINT order, STRING client );
   UINT Get( FIX::Message& message, STRING client );
+  int  GetSequ( STRING client );
+  void SetSequ( STRING client, UINT sequ );
 private:
   STRING IpAddress, Username, Password;
   UINT NowGroup;
+  UINT RecordNumber;
   FIX::MySQLConnection *QuotationDatabase;
   FIX::MySQLQuery *QueryQuoteOrder;
   class QuotationGroup *QuotationGroups[ MAX_GROUP ];

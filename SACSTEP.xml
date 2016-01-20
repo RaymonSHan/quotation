@@ -288,6 +288,7 @@
    <value enum='5800' description='其他类型' />
   </field>
   <field number='567' name='TradSesStatusRejReason' type='INT'>
+   <value enum='0' description='OK' />
    <value enum='1' description='UNKNOWN_OR_INVALID_TRADINGSESSIONID' />
    <value enum='99' description='OTHER' />
   </field>

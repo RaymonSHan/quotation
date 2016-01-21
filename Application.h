@@ -62,7 +62,8 @@ private:
 
 #define MAX_GROUP 16
 #define MAX_FIELD 200
-#define SERVER_NAME "EXECUTOR"
+//#define SLEEP_COUNT 30
+//#define SERVER_NAME "EXECUTOR"
 #define MSGTYPE_UF021 "UF021"
 #define MSGTYPE_UF022 "UF022"
 
@@ -78,7 +79,6 @@ public:
   UINT Add( UINT memberNumber );
   UINT Add( UINT groupNumber, UINT memberNumber );
   STRING GetMainField( FIX::Message& message, UINT order );
-  UINT GetErrorField( FIX::Message& message );
   UINT GetGroupField( FIX::Message& message, STRING id );
 
 private:
@@ -92,11 +92,13 @@ class QuotationDatabaseCache
 {
 public:
   QuotationDatabaseCache( STRING ipaddress, STRING username, STRING password );
+  ~QuotationDatabaseCache();
   UINT Connect();
   UINT Disconnect();
   UINT Reflush();
   UINT Get( FIX::Message& message, UINT order, STRING client );
-  UINT Get( FIX::Message& message, STRING client );
+  UINT Get( FIX::Message& message, STRING client, STRING server );
+  UINT Get( FIX::Message& message, const FIX::SessionID& sessionID, bool renew = 0 );
   int  GetSequ( STRING client );
   void SetSequ( STRING client, UINT sequ );
 private:

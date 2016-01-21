@@ -38,8 +38,11 @@ void Application::onLogon( const FIX::SessionID& sessionID )
 
 void Application::onLogout( const FIX::SessionID& sessionID )
 {
+  if ( !GlobalLogout ) {
+	std::cout << std::endl << "Logout - " << sessionID << std::endl;
+  }
   GlobalLogout = 1;
-  std::cout << std::endl << "Logout - " << sessionID << std::endl;
+
 }
 
 void Application::fromApp( const FIX::Message& message, const FIX::SessionID& sessionID )
@@ -83,7 +86,7 @@ void Application::onMessage( const FIX42::Message& message, const FIX::SessionID
 
   if( msgTypeValue == "UF021" )
   {
-printf("onMessage 1\n");
+    std::cout << std::endl << message.toString() << std::endl;
     FIX::Message newmessage;
     FIX::Header& newheader = newmessage.getHeader();
 
@@ -96,8 +99,6 @@ printf("onMessage 1\n");
     newmessage.setField( 60, "20160120-11:22:33" );
     newmessage.setField( 58, "OK" );
     newmessage.setField( 567, "0" );
-printf("onMessage 2\n");
 	FIX::Session::sendToTarget( newmessage );
-printf("onMessage 3\n");
   }
 }

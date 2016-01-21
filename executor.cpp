@@ -32,16 +32,34 @@
 #include <iostream>
 #include <fstream>
 
+QuotationDatabaseCache *MainDatabase = 0;
+QuotationDatabaseCache *MainDatabasePrepare = 0;
+STRING QuoteUser, QuotePassword, QuoteHost;
+UINT SleepCount;
+
 void wait()
 {
+  static UINT sleepCount = 0;
+  QuotationDatabaseCache *temp;
   std::cout << "Type Ctrl-C to quit" << std::endl;
   while(true)
   {
     FIX::process_sleep(1);
+	if ( sleepCount++ == SleepCount ) {
+      sleepCount = 0;
+ 	  std::cout << "Reflush Database" << std::endl;
+	  if ( MainDatabasePrepare ) delete MainDatabasePrepare;
+
+      MainDatabasePrepare = new QuotationDatabaseCache
+        ( QuoteHost, QuoteUser, QuotePassword );
+	  MainDatabasePrepare -> Connect();
+	  temp = MainDatabase;
+	  MainDatabase = MainDatabasePrepare;
+	  MainDatabasePrepare = NULL;
+	  delete temp;
+    }
   }
 }
-
-QuotationDatabaseCache *MainDatabase;
 
 int main( int argc, char** argv )
 {
@@ -55,14 +73,20 @@ int main( int argc, char** argv )
   try
   {
     FIX::SessionSettings settings( file );
+	const FIX::Dictionary& defaultDict = settings.get();
+
+	QuoteUser = defaultDict.getString( "MySQLQuoteUser" );
+	QuotePassword = defaultDict.getString( "MySQLQuotePassword" );
+	QuoteHost = defaultDict.getString( "MySQLQuoteHost" );
+    SleepCount = defaultDict.getInt( "MySQLQuoteReflush" );
 
     Application application;
     FIX::FileStoreFactory storeFactory( settings );
-    FIX::ScreenLogFactory logFactory( settings );
-    FIX::ThreadedSocketAcceptor acceptor( application, storeFactory, settings, logFactory );
+    FIX::ThreadedSocketAcceptor acceptor( application, storeFactory, settings );
 
-    MainDatabase = new QuotationDatabaseCache( "192.168.206.139", "root", "" );
-    MainDatabase->Connect();
+    MainDatabase = new QuotationDatabaseCache
+	  ( QuoteHost, QuoteUser, QuotePassword );
+    MainDatabase -> Connect();
     acceptor.start();
     wait();
     acceptor.stop();

@@ -33,21 +33,20 @@ void Application::onCreate( const FIX::SessionID& sessionID ) {}
 void Application::onLogon( const FIX::SessionID& sessionID ) 
 {
   FIX::Message message;
-  const FIX::SenderCompID& senderid = sessionID.getSenderCompID();
-  const FIX::TargetCompID& targetid = sessionID.getTargetCompID();
-  const STRING& sender = senderid.getString();
-  const STRING& target = targetid.getString();
+  //  const FIX::TargetCompID& targetid = sessionID.getTargetCompID();
+  //  const STRING& target = targetid.getString();
 
-printf("login 1\n");
-  MainDatabase -> SetSequ( target, 0 );
-printf("login 2 s:%s, t:%s\n", sender.c_str(), target.c_str());
-  MainDatabase -> Get( message, target );
-printf("login 3\n");
+  std::cout << std::endl << "Logon - " << sessionID << std::endl;
+  //  MainDatabase -> SetSequ( target, 0 );
+  MainDatabase -> Get( message, sessionID, true );
   FIX::Session::sendToTarget( message );
-printf("login 4\n");
 };
 
-void Application::onLogout( const FIX::SessionID& sessionID ) {}
+void Application::onLogout( const FIX::SessionID& sessionID ) 
+{
+  std::cout << "Logout - " << sessionID << std::endl;
+};
+
 void Application::toAdmin( FIX::Message& message,
                            const FIX::SessionID& sessionID ) {}
 void Application::toApp( FIX::Message& message,
@@ -111,6 +110,11 @@ QuotationDatabaseCache::QuotationDatabaseCache
   SessionMap.clear();
 };
 
+QuotationDatabaseCache::~QuotationDatabaseCache() 
+{
+  Disconnect();
+};
+
 UINT QuotationDatabaseCache::Connect()
 {
   STRING stringQuoteOrder;
@@ -167,18 +171,9 @@ STRING QuotationGroup::GetMainField( FIX::Message& message, UINT order )
 {
   STRING strid = QueryQuoteMore->getValue( order, 0 );
   for( UINT i = 0; i < FieldNumber; i++ ) {
-    //printf("MainField order %d, %s\n", Fields[i], QueryQuoteMore->getValue( order, i+1 ));
     message.setField( Fields[ i ], QueryQuoteMore->getValue( order, i+1 ));
   }
   return strid;
-};
-
-UINT QuotationGroup::GetErrorField( FIX::Message& message )
-{
-  for( UINT i = 0; i < FieldNumber; i++ ) {
-    message.setField( Fields[ i ], "0" );
-  }
-  return 1;
 };
 
 UINT QuotationGroup::GetGroupField( FIX::Message& message, STRING id )
@@ -207,14 +202,14 @@ UINT QuotationDatabaseCache::Get( FIX::Message& message, UINT order, STRING clie
   return 0;
 };
 
-UINT QuotationDatabaseCache::Get( FIX::Message& message, STRING client )
+UINT QuotationDatabaseCache::Get( FIX::Message& message, STRING client, STRING server )
 {
   std::map<STRING, UINT>::iterator iter;
   UINT order;
   FIX::Header& header = message.getHeader();
 
   header.setField( FIX::BeginString( FIX::BeginString_FIX42 ));
-  header.setField( FIX::SenderCompID( SERVER_NAME ));
+  header.setField( FIX::SenderCompID( server ));
   header.setField( FIX::TargetCompID( client ));
   header.setField( FIX::MsgType( MSGTYPE_UF021 ));
 
@@ -231,7 +226,6 @@ UINT QuotationDatabaseCache::Get( FIX::Message& message, STRING client )
 	else {
       header.setField( FIX::MsgType( "5" ));
 	  return 1;
-      //	  return QuotationGroups[ 0 ] -> GetErrorField( message );
     }
   }
 };
@@ -264,25 +258,29 @@ void Application::onMessage( const FIX42::Message& message,
 
   if( msgTypeValue == MSGTYPE_UF022 )
   {
-printf("uf022 1\n");
     FIX::Message message;
-    const FIX::SenderCompID& senderid = sessionID.getSenderCompID();
-    const FIX::TargetCompID& targetid = sessionID.getTargetCompID();
-    const STRING& sender = senderid.getString();
-    const STRING& target = targetid.getString();
+    //    const FIX::TargetCompID& targetid = sessionID.getTargetCompID();
+    //    const STRING& target = targetid.getString();
     UINT result;
 
-printf("uf022 2 s:%s, t:%s\n", sender.c_str(), target.c_str());
-    result = MainDatabase -> Get( message, target );
+    result = MainDatabase -> Get( message, sessionID );
     if ( result != 1 ) {
-printf("uf022 3\n");
 	  FIX::Session::sendToTarget( message );
-printf("uf022 4\n");
     } else {
-printf("uf022 5\n");
 	  FIX::Session::sendToTarget( message );
-printf("uf022 6\n");
     }
   }
-printf("uf022 7\n");
+}
+
+UINT QuotationDatabaseCache::Get( FIX::Message& message, 
+                                  const FIX::SessionID& sessionID, bool renew )
+{
+    const FIX::TargetCompID& targetid = sessionID.getTargetCompID();
+	const FIX::SenderCompID& serverid = sessionID.getSenderCompID();
+
+    const STRING& target = targetid.getString();
+	const STRING& server = serverid.getString();
+
+	if ( renew ) SetSequ( target, 0 );
+    return Get( message, target, server );
 }
